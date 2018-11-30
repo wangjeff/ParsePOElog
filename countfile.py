@@ -6,6 +6,11 @@ import os
 ps_date = "1128_1\\"
 ps_fix_path = "D:\\work\\POE\\POE_test_data\\POE_people\\"
 ps_file_type = ".txt"
+filter_badge1 = "ec21e54475ac"
+filter_badge2 = "ec21e59277ac"
+filter_rssi = 89
+range_low = 1  # include equal
+range_upper = 11  # not include equal
 
 
 # read file data into string
@@ -49,15 +54,15 @@ def file_to_dict_data(file_name):
 
 
 def write_to_file(json_data_w, mac_file, mac_file_o1):
-    text_file = open(mac_file_o1, 'a', newline='')
+    text_file = open(mac_file_o1, 'a', newline='')  # not to rewrite the file
     sort_key = sorted(json_data_w, key=lambda k: json_data_w[k]['MAC'])
     text_file.write("\n %s" % mac_file)
     for key in sort_key:
         # print("%s: %s" % (key, json_data_w[key]))
-        if json_data_w[key]['MAC'] != "d0d0d0d0d0d0":
-            if (json_data_w[key]['MAC'] == "ec21e54475ac") | (json_data_w[key]['MAC'] == "ec21e59277ac"):
-                # print("%s: %s" % (key, json_data_w[key]))
-                text_file.write("\n %s: %s" % (key, json_data_w[key]))
+        if (json_data_w[key]['MAC'] != "d0d0d0d0d0d0") & (int(json_data_w[key]['RSSI']) < filter_rssi):
+            if (json_data_w[key]['MAC'] == filter_badge1) | (json_data_w[key]['MAC'] == filter_badge2):
+                print("%s , %s ,%s " % (json_data_w[key]['MAC'], json_data_w[key]['RSSI'], json_data_w[key]['TIME']))
+                text_file.write("\n%s , %s ,%s " % (json_data_w[key]['MAC'], json_data_w[key]['RSSI'], json_data_w[key]['TIME']))
 
     # for key, value in json_data_w.items():
     #     print('\nKey: %s' % key)
@@ -70,7 +75,7 @@ def main():
     mac_file_i2 = "PF2_"
     mac_file_i3 = "PF3_"
     mac_file_o1 = "parse_output_"
-    current_path = ps_fix_path+ ps_date
+    current_path = ps_fix_path + ps_date
     # json_data1 = file_to_dict_data(mac_file1)
     # json_data2 = file_to_dict_data(mac_file2)
     # json_data3 = file_to_dict_data(mac_file3)
@@ -78,11 +83,12 @@ def main():
     # write_to_file(json_data2, mac_file2)
     # write_to_file(json_data3, mac_file3)
 
-    for ikey in range(1, 11):
+    # if the file exist then delete the file
+    for ikey in range(range_low, range_upper):
         if os.path.exists(current_path + mac_file_o1 + str(ikey) + ps_file_type):
             os.remove(current_path + mac_file_o1 + str(ikey) + ps_file_type)
 
-    for ikey in range(1, 11):
+    for ikey in range(range_low, range_upper):
         json_data1 = file_to_dict_data(current_path + mac_file_i1 + str(ikey) + ps_file_type)
         json_data2 = file_to_dict_data(current_path + mac_file_i2 + str(ikey) + ps_file_type)
         json_data3 = file_to_dict_data(current_path + mac_file_i3 + str(ikey) + ps_file_type)
