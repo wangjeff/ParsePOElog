@@ -2,20 +2,23 @@
 import json
 import os
 
-ps_date = "1203_7_in_out\\"
+ps_date = "1215\\"
 ps_fix_path = "D:\\work\\POE\\POE_test_data\\POE_people\\"
 ps_file_type = ".txt"
 filter_badge1 = "ec21e54475ac"  # Bob
-filter_badge2 = "ec21e59776ac"  # rain_man
+filter_badge2 = "ec21e5476fac"  # rain_man
 filter_badge3 = "ec21e53875ac"  # happy
-filter_badge4 = "ec21e5ed6eac"  # sweet
-filter_badge5 = "ec21e5476fac"  # eilieen
-filter_badge6 = "ec21e5b066ac"  # alvin
-filter_badge7 = "ec21e5a070ac"  # small
-filter_badge8 = "ec21e5ce83ac"  # zhang
+filter_badge4 = "ec21e5"  # sweet
+filter_badge5 = "ec21e5"  # eilieen
+filter_badge6 = "ec21e5"  # alvin
+filter_badge7 = "ec21e5c"  # zh
+filter_badge8 = "ec21e5"  # Bucky
 filter_rssi = 89
-range_low = 22  # include equal
-range_upper = 24  # not include equal
+filter_min = 46
+filter_sec_lower = 7
+filter_sec_upper = 28
+range_low = 1  # include equal
+range_upper = 2  # not include equal
 
 
 # read file data into string
@@ -40,11 +43,15 @@ def file_to_dict_data(file_name):
             rssi_data = 256 + ~int(sorted_data[6], 16)
             # text_file.write("%s. MAC:%s RSSI:-%s Time:%s \n" % (i, SortedData[:6], Rssi_data, SortedData[7:]))
             if a != "":
-                a = a + ","+("%s:{'MAC':'%s','RSSI':'%s','TIME':'%s'}" % (i, sorted_data[0]+sorted_data[1]+sorted_data[2]+sorted_data[3]
+                if ((int(sorted_data[9], 16) > filter_sec_lower+1) & (int(sorted_data[9], 16) < filter_sec_upper+1) & (
+                        int(sorted_data[8], 16) == filter_min)):
+                    a = a + ","+("%s:{'MAC':'%s','RSSI':'%s','TIME':'%s'}" % (i, sorted_data[0]+sorted_data[1]+sorted_data[2]+sorted_data[3]
                                                           + sorted_data[4]+sorted_data[5], rssi_data, str(int(sorted_data[7], 16))+"-"
                                                           + str(int(sorted_data[8], 16))+"-"+str(int(sorted_data[9], 16))))
             else:
-                a = a + ("%s:{'MAC':'%s','RSSI':'%s','TIME':'%s'}" % (i, sorted_data[0]+sorted_data[1]+sorted_data[2]
+                if ((int(sorted_data[9], 16) > filter_sec_lower+1) & (int(sorted_data[9], 16) < filter_sec_upper+1) & (
+                        int(sorted_data[8], 16) == filter_min)):
+                    a = a + ("%s:{'MAC':'%s','RSSI':'%s','TIME':'%s'}" % (i, sorted_data[0]+sorted_data[1]+sorted_data[2]
                                                                    + sorted_data[3] + sorted_data[4]+sorted_data[5]
                                                                    , rssi_data, str(int(sorted_data[7], 16))+"-"
                                                                    + str(int(sorted_data[8], 16))+"-"+str(int(sorted_data[9], 16))))
@@ -58,19 +65,19 @@ def file_to_dict_data(file_name):
     return json_data
 
 
-def write_to_file(json_data_w, mac_file, mac_file_o1):
+def write_to_file(json_data_w, mac_file, mac_file_o1,num):
     text_file = open(mac_file_o1, 'a', newline='')  # not to rewrite the file
     sort_key = sorted(json_data_w, key=lambda k: json_data_w[k]['MAC'])
-    text_file.write("\n %s" % mac_file)
+    # text_file.write("\n %s" % mac_file) //mark the first file name
     for key in sort_key:
         # print("%s: %s" % (key, json_data_w[key]))
-        if (json_data_w[key]['MAC'] != "d0d0d0d0d0d0") & (int(json_data_w[key]['RSSI']) < filter_rssi):
+        if (json_data_w[key]['MAC'] != "d0d0d0d0d0d0") & (int(json_data_w[key]['RSSI']) < filter_rssi) :
             if (json_data_w[key]['MAC'] == filter_badge1) | (json_data_w[key]['MAC'] == filter_badge2) \
                     | (json_data_w[key]['MAC'] == filter_badge3) | (json_data_w[key]['MAC'] == filter_badge4) \
                     | (json_data_w[key]['MAC'] == filter_badge5) | (json_data_w[key]['MAC'] == filter_badge6) \
                     | (json_data_w[key]['MAC'] == filter_badge7) | (json_data_w[key]['MAC'] == filter_badge8):
                 print("%s , %s ,%s " % (json_data_w[key]['MAC'], json_data_w[key]['RSSI'], json_data_w[key]['TIME']))
-                text_file.write("\n%s , %s ,%s " % (json_data_w[key]['MAC'], json_data_w[key]['RSSI'], json_data_w[key]['TIME']))
+                text_file.write("\n%s , %s ,%s ,%s" % (json_data_w[key]['MAC'], json_data_w[key]['RSSI'], json_data_w[key]['TIME'], num))
 
     # for key, value in json_data_w.items():
     #     print('\nKey: %s' % key)
@@ -102,9 +109,9 @@ def main():
         json_data1 = file_to_dict_data(current_path + mac_file_i1 + temp_value + ps_file_type)
         json_data2 = file_to_dict_data(current_path + mac_file_i2 + temp_value + ps_file_type)
         json_data3 = file_to_dict_data(current_path + mac_file_i3 + temp_value + ps_file_type)
-        write_to_file(json_data1, current_path + mac_file_i1 + temp_value, current_path + mac_file_o1 + temp_value + ps_file_type)
-        write_to_file(json_data2, current_path + mac_file_i2 + temp_value, current_path + mac_file_o1 + temp_value + ps_file_type)
-        write_to_file(json_data3, current_path + mac_file_i3 + temp_value, current_path + mac_file_o1 + temp_value+ ps_file_type)
+        write_to_file(json_data1, current_path + mac_file_i1 + temp_value, current_path + mac_file_o1 + temp_value + ps_file_type, 1)
+        write_to_file(json_data2, current_path + mac_file_i2 + temp_value, current_path + mac_file_o1 + temp_value + ps_file_type, 2)
+        write_to_file(json_data3, current_path + mac_file_i3 + temp_value, current_path + mac_file_o1 + temp_value+ ps_file_type, 3)
 
 
 if __name__ == '__main__':
